@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import type { VideoScriptResult } from "@/app/api/video/script/route";
 import { BriefForm } from "@/components/BriefForm";
 import { EmptyState, ErrorBox, GenerateButton, PageHeader, Spinner } from "@/components/ui";
-import { api, saveProject, updateProject, useBrief, useGenerate, useStored } from "@/lib/client";
+import { api, refreshProfile, useBrief, useGenerate, useStored } from "@/lib/client";
+import { COSTS } from "@/lib/plans";
 import { VIDEO_STYLES, type VideoStyle } from "@/lib/constants";
 
 type Avatar = { avatar_id: string; avatar_name: string; preview_image_url: string; gender: string };
 type Voice = { voice_id: string; name: string; language: string; gender: string; preview_audio: string };
-type Render = { projectId: string | null; videoId: string; status: string; url?: string; error?: string };
+type Render = { projectId: string; status: string; url?: string; error?: string };
 
 export default function VideosPage() {
   const [brief] = useBrief();
@@ -62,7 +63,7 @@ export default function VideosPage() {
               </div>
             </div>
             <GenerateButton loading={loading} onClick={generate}>
-              ✨ {script ? "Nouveau script" : "Écrire le script"}
+              ✨ {script ? "Nouveau script" : "Écrire le script"} · {COSTS["video-script"]} crédit
             </GenerateButton>
             <ErrorBox error={error} />
           </div>
@@ -172,30 +173,31 @@ function RenderPanel({ script, horizontal }: { script: VideoScriptResult; horizo
     if (!render || render.status === "completed" || render.status === "failed") return;
     const timer = setInterval(async () => {
       try {
-        const s = await api<{ status: string; video_url?: string; error?: { message?: string } | null }>("/api/video/status", { videoId: render.videoId });
-        const next = { ...render, status: s.status, url: s.video_url, error: s.error?.message };
-        setRender(next);
-        if (s.status === "completed" && render.projectId) updateProject(render.projectId, { script, videoId: render.videoId, url: s.video_url });
+        const s = await api<{ status: string; url?: string; error?: string }>("/api/video/status", { projectId: render.projectId });
+        setRender({ ...render, status: s.status, url: s.url, error: s.error });
+        if (s.status === "failed") refreshProfile(); // crédits remboursés
       } catch {
         /* nouvel essai au prochain intervalle */
       }
     }, 10000);
     return () => clearInterval(timer);
-  }, [render, setRender, script]);
+  }, [render, setRender]);
 
   const submit = async () => {
     setSubmitting(true);
     setRenderError(null);
     try {
-      const { videoId } = await api<{ videoId: string }>("/api/video/render", {
+      const { projectId } = await api<{ projectId: string }>("/api/video/render", {
+        title: script.title,
+        script,
         avatarId,
         voiceId,
         format,
         captions,
         scenes: script.scenes.map((s) => ({ voiceover: s.voiceover, background: s.background })),
       });
-      const project = saveProject("video", script.title, { script, videoId });
-      setRender({ projectId: project?.id || null, videoId, status: "pending" });
+      setRender({ projectId, status: "pending" });
+      refreshProfile();
     } catch (e) {
       setRenderError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -264,7 +266,7 @@ function RenderPanel({ script, horizontal }: { script: VideoScriptResult; horizo
             </label>
           </div>
           <GenerateButton loading={submitting} onClick={submit} disabled={!avatarId || !voiceId} loadingLabel="Envoi…">
-            🎬 Générer la vidéo
+            🎬 Générer la vidéo · {COSTS["video-render"]} crédits
           </GenerateButton>
           <ErrorBox error={renderError} />
         </>
@@ -285,7 +287,7 @@ function RenderPanel({ script, horizontal }: { script: VideoScriptResult; horizo
               <span className="text-brand-600">
                 <Spinner />
               </span>
-              Rendu en cours ({render.status})… 1 à 10 min. Tu peux quitter la page.
+              Rendu en cours ({render.status})… 1 à 10 min. La vidéo sera aussi sauvegardée dans « Mes projets ».
             </p>
           )}
         </div>

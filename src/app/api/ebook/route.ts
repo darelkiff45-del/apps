@@ -43,4 +43,7 @@ export const POST = handler(Input, async ({ brief, chapters, length }) => {
       "L'appel à l'action final invite le lecteur à passer à l'étape suivante avec le créateur.",
     "medium",
   );
+}, {
+  cost: "ebook",
+  save: (_, ebook) => ({ type: "ebook", title: ebook.title, data: ebook }),
 });

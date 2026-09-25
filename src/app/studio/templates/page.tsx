@@ -4,8 +4,9 @@ import { useState } from "react";
 import { BriefForm } from "@/components/BriefForm";
 import { HtmlPreview } from "@/components/HtmlPreview";
 import { EmptyState, ErrorBox, GenerateButton, PageHeader } from "@/components/ui";
-import { saveProject, slugify, useBrief, useGenerate, useStored } from "@/lib/client";
+import { slugify, useBrief, useGenerate, useStored } from "@/lib/client";
 import { TEMPLATE_KINDS } from "@/lib/constants";
+import { COSTS } from "@/lib/plans";
 
 export default function TemplatesPage() {
   const [brief] = useBrief();
@@ -19,7 +20,6 @@ export default function TemplatesPage() {
     const res = await run("/api/template", { brief, kind, pages, details });
     if (res) {
       setHtml(res.html);
-      saveProject("template", `${kind} — ${brief.name || brief.niche || "sans nom"}`, res.html);
     }
   };
 
@@ -47,7 +47,7 @@ export default function TemplatesPage() {
               <textarea className="input" rows={3} placeholder="Ex. planner mensuel 2026, couleurs pastel, style minimaliste" value={details} onChange={(e) => setDetails(e.target.value)} />
             </div>
             <GenerateButton loading={loading} onClick={generate}>
-              ✨ Créer le template
+              ✨ Créer le template · {COSTS.template} crédits
             </GenerateButton>
             <ErrorBox error={error} />
           </div>

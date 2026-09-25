@@ -25,4 +25,7 @@ export const POST = handler(Input, async ({ brief, business, sections, style, co
       (contact ? `Coordonnées : ${contact}\n` : ""),
   );
   return { html };
+}, {
+  cost: "site",
+  save: ({ business, brief }, { html }) => ({ type: "site", title: business || brief.name || "Site vitrine", data: { html } }),
 });

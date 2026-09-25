@@ -4,7 +4,8 @@ import { useState } from "react";
 import { BriefForm } from "@/components/BriefForm";
 import { HtmlPreview } from "@/components/HtmlPreview";
 import { EmptyState, ErrorBox, GenerateButton, PageHeader } from "@/components/ui";
-import { saveProject, slugify, useBrief, useGenerate, useStored } from "@/lib/client";
+import { slugify, useBrief, useGenerate, useStored } from "@/lib/client";
+import { COSTS } from "@/lib/plans";
 
 const FRAMEWORKS = [
   { id: "PAS", label: "PAS — Problème, Agitation, Solution" },
@@ -34,7 +35,6 @@ export default function SalesPage() {
     });
     if (res) {
       setHtml(res.html);
-      saveProject("sales-page", `Page de vente — ${brief.name || "produit"}`, res.html);
     }
   };
 
@@ -80,7 +80,7 @@ export default function SalesPage() {
               <p className="text-xs text-gray-500">Astuce : dans « Mockups », clique « Utiliser sur la page de vente » pour afficher ton produit.</p>
             )}
             <GenerateButton loading={loading} onClick={generate}>
-              ✨ Écrire la page de vente
+              ✨ Écrire la page de vente · {COSTS["sales-page"]} crédits
             </GenerateButton>
             <ErrorBox error={error} />
           </div>

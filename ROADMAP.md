@@ -1,6 +1,6 @@
 # Feuille de route — 3 versions
 
-## V1 — Le Studio IA (disponible)
+## V1 — Le Studio IA (terminée)
 
 **Objectif :** créer un produit digital complet et son marketing en une après-midi.
 
@@ -13,18 +13,20 @@
 - [x] Scripts vidéo UGC & storytelling + vidéo avec avatar IA (HeyGen)
 - [x] Bibliothèque de projets (stockée dans le navigateur)
 
-## V2 — Le SaaS commercialisable (prochaine étape)
+## V2 — Le SaaS commercialisable (en cours)
 
 **Objectif :** transformer le studio en abonnement payant, multi-utilisateurs.
 
-- [ ] Comptes utilisateurs (email, Google) et base de données
-- [ ] Abonnements Starter / Pro / Business : Stripe + Mobile Money
-- [ ] Crédits de génération par mois et suivi de la consommation
+*Lot 1 (livré) : comptes, abonnements, crédits, cloud. Lot 2 : éditeur visuel, images IA, hébergement, variantes.*
+
+- [x] Comptes utilisateurs (email, Google) et base de données
+- [x] Abonnements Starter / Pro / Business : Stripe + Mobile Money
+- [x] Crédits de génération par mois et suivi de la consommation
 - [ ] Éditeur visuel : modifier textes, couleurs et images après génération
 - [ ] Images générées par IA pour couvertures, sites et pages de vente
 - [ ] Hébergement en 1 clic des sites et pages de vente (sous-domaine + domaine perso)
 - [ ] 3 variantes par génération pour choisir la meilleure
-- [ ] Stockage cloud des PDF, images et vidéos
+- [x] Stockage cloud des projets, images et vidéos
 
 ## V3 — La machine de vente (plus tard)
 

@@ -17,6 +17,16 @@ export function ErrorBox({ error }: { error: string | null }) {
   return (
     <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
       {error}
+      {/crédit|formule/i.test(error) && (
+        <a href="/tarifs" className="mt-2 block font-semibold text-brand-700 underline">
+          Voir les formules →
+        </a>
+      )}
+      {/connecte-toi/i.test(error) && (
+        <a href="/connexion" className="mt-2 block font-semibold text-brand-700 underline">
+          Se connecter →
+        </a>
+      )}
     </div>
   );
 }

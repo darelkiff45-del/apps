@@ -165,12 +165,14 @@ function SceneCard({
   price,
   filename,
   onUseForSales,
+  onSaveCloud,
 }: {
   scene: (typeof SCENES)[number];
   design: CoverDesign;
   price: string;
   filename: string;
   onUseForSales?: (dataUrl: string) => void;
+  onSaveCloud?: (name: string, dataUrl: string) => Promise<void>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
@@ -203,6 +205,19 @@ function SceneCard({
               Utiliser sur la page de vente
             </button>
           )}
+          {onSaveCloud && (
+            <button
+              className="btn-ghost px-2 py-1 text-xs"
+              disabled={busy}
+              title="Enregistrer dans le cloud"
+              onClick={async () => {
+                const url = await exportPng(2);
+                if (url) await onSaveCloud(`${filename}-${scene.id}.png`, url).catch((e) => alert(e.message));
+              }}
+            >
+              ☁️
+            </button>
+          )}
           <button
             className="btn-primary px-2 py-1 text-xs"
             disabled={busy}
@@ -231,16 +246,18 @@ export function MockupGallery({
   price,
   filename,
   onUseForSales,
+  onSaveCloud,
 }: {
   design: CoverDesign;
   price: string;
   filename: string;
   onUseForSales?: (dataUrl: string) => void;
+  onSaveCloud?: (name: string, dataUrl: string) => Promise<void>;
 }) {
   return (
     <div className="grid gap-4 xl:grid-cols-2">
       {SCENES.map((s) => (
-        <SceneCard key={s.id} scene={s} design={design} price={price} filename={filename} onUseForSales={onUseForSales} />
+        <SceneCard key={s.id} scene={s} design={design} price={price} filename={filename} onUseForSales={onUseForSales} onSaveCloud={onSaveCloud} />
       ))}
     </div>
   );

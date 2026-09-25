@@ -24,4 +24,7 @@ export const POST = handler(Input, async ({ brief, kind, pages, details }) => {
       (details ? `\n\nPrécisions du créateur : ${details}` : ""),
   );
   return { html };
+}, {
+  cost: "template",
+  save: ({ kind, brief }, { html }) => ({ type: "template", title: `${kind} — ${brief.name || brief.niche || "sans nom"}`, data: { html } }),
 });

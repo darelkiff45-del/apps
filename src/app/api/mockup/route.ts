@@ -36,4 +36,7 @@ export const POST = handler(Input, async ({ brief, productType }) => {
     `Conçois la couverture d'un produit de type « ${productType} ».\n\n${briefToText(brief)}`,
     "low",
   );
+}, {
+  cost: "mockup",
+  save: (_, design) => ({ type: "mockup", title: design.title, data: design }),
 });

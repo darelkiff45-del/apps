@@ -1,8 +1,10 @@
 import { z } from "zod";
+import { requireVideoPlan } from "@/lib/account";
 import { createVideo } from "@/lib/heygen";
 import { handler } from "@/lib/route";
 
 const Input = z.object({
+  title: z.string().max(200).default("Vidéo pub"),
   avatarId: z.string().min(1),
   voiceId: z.string().min(1),
   format: z.enum(["vertical", "square", "horizontal"]).default("vertical"),
@@ -16,6 +18,21 @@ const Input = z.object({
     )
     .min(1)
     .max(20),
+  script: z.unknown().optional(),
 });
 
-export const POST = handler(Input, async (data) => ({ videoId: await createVideo(data) }));
+export const POST = handler(
+  Input,
+  async (data, { user }) => {
+    await requireVideoPlan(user.id);
+    return { videoId: await createVideo(data) };
+  },
+  {
+    cost: "video-render",
+    save: ({ title, script, format }, { videoId }) => ({
+      type: "video",
+      title,
+      data: { script, videoId, format, status: "pending" },
+    }),
+  },
+);

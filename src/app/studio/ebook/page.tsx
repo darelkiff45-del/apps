@@ -6,8 +6,9 @@ import { BriefForm } from "@/components/BriefForm";
 import type { CoverDesign } from "@/components/Cover";
 import { HtmlPreview } from "@/components/HtmlPreview";
 import { EmptyState, ErrorBox, GenerateButton, PageHeader } from "@/components/ui";
-import { saveProject, slugify, useBrief, useGenerate, useStored } from "@/lib/client";
+import { slugify, useBrief, useGenerate, useStored } from "@/lib/client";
 import { ebookToHtml } from "@/lib/ebook";
+import { COSTS } from "@/lib/plans";
 
 export default function EbookPage() {
   const [brief] = useBrief();
@@ -23,7 +24,6 @@ export default function EbookPage() {
     const res = await run("/api/ebook", { brief, chapters, length });
     if (res) {
       setEbook(res);
-      saveProject("ebook", res.title, res);
     }
   };
 
@@ -56,7 +56,7 @@ export default function EbookPage() {
               {cover ? "✓ La couverture créée dans « Mockups » sera utilisée." : "Astuce : crée d'abord ta couverture dans « Mockups & visuels »."}
             </p>
             <GenerateButton loading={loading} onClick={generate} loadingLabel="Rédaction en cours… (1 à 4 min)">
-              ✨ Écrire l&apos;ebook
+              ✨ Écrire l&apos;ebook · {COSTS.ebook} crédits
             </GenerateButton>
             <ErrorBox error={error} />
           </div>

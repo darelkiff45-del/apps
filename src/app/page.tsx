@@ -10,9 +10,17 @@ export default function Home() {
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 text-white">✦</span>
           Créateur Digital
         </div>
-        <Link href="/studio" className="btn-primary">
-          Ouvrir le studio
-        </Link>
+        <nav className="flex items-center gap-2">
+          <Link href="/tarifs" className="btn-ghost border-0 bg-transparent">
+            Tarifs
+          </Link>
+          <Link href="/connexion" className="btn-ghost">
+            Se connecter
+          </Link>
+          <Link href="/studio" className="btn-primary hidden sm:inline-flex">
+            Ouvrir le studio
+          </Link>
+        </nav>
       </header>
 
       <section className="mx-auto max-w-4xl px-4 pt-12 pb-16 text-center md:pt-20">
@@ -28,9 +36,9 @@ export default function Home() {
           <Link href="/studio" className="btn-primary px-6 py-3 text-base">
             Commencer gratuitement →
           </Link>
-          <a href="#roadmap" className="btn-ghost px-6 py-3 text-base">
-            Voir la feuille de route
-          </a>
+          <Link href="/tarifs" className="btn-ghost px-6 py-3 text-base">
+            Voir les tarifs
+          </Link>
         </div>
       </section>
 

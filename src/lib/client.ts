@@ -45,51 +45,77 @@ export function useBrief() {
   return useStored<Brief>("brief", emptyBrief);
 }
 
-/* ---------- Bibliothèque de projets ---------- */
+/* ---------- Projets (cloud) ---------- */
 
 export type ProjectType = "ebook" | "template" | "site" | "sales-page" | "mockup" | "video";
 
-export type Project = {
+export type ProjectSummary = {
   id: string;
   type: ProjectType;
   title: string;
-  createdAt: number;
-  data: unknown;
+  files: string[];
+  created_at: string;
 };
 
-export function listProjects(): Project[] {
-  return read<Project[]>("projects", []);
+/** Projets de la V1 restés dans le navigateur (à importer dans le cloud). */
+export type LocalProject = { id: string; type: ProjectType; title: string; createdAt: number; data: unknown };
+
+export function listLocalProjects(): LocalProject[] {
+  return read<LocalProject[]>("projects", []);
 }
 
-export function saveProject(type: ProjectType, title: string, data: unknown): Project | null {
-  const project: Project = { id: crypto.randomUUID(), type, title, createdAt: Date.now(), data };
-  const all = [project, ...listProjects()].slice(0, 50);
-  // Si le stockage est plein, on supprime les plus anciens projets.
-  for (let n = all.length; n > 0; n--) {
-    if (write("projects", all.slice(0, n))) return project;
+export function clearLocalProjects() {
+  try {
+    localStorage.removeItem("projects");
+  } catch {
+    /* rien */
   }
-  return null;
 }
 
-export function updateProject(id: string, data: unknown) {
-  write(
-    "projects",
-    listProjects().map((p) => (p.id === id ? { ...p, data } : p)),
-  );
+/* ---------- Compte et crédits ---------- */
+
+export type Profile = {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  plan: "free" | "starter" | "pro" | "business";
+  plan_expires_at: string | null;
+  credits: number;
+  credits_reset_at: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+};
+
+const PROFILE_EVENT = "profile-changed";
+
+/** Demande le rafraîchissement du solde de crédits affiché partout. */
+export function refreshProfile() {
+  window.dispatchEvent(new Event(PROFILE_EVENT));
 }
 
-export function deleteProject(id: string) {
-  write(
-    "projects",
-    listProjects().filter((p) => p.id !== id),
-  );
+export function useProfile() {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const load = () =>
+      api<{ profile: Profile }>("/api/me")
+        .then((r) => alive && setProfile(r.profile))
+        .catch(() => alive && setProfile(null));
+    load();
+    window.addEventListener(PROFILE_EVENT, load);
+    return () => {
+      alive = false;
+      window.removeEventListener(PROFILE_EVENT, load);
+    };
+  }, []);
+  return profile;
 }
 
 /* ---------- Appels API ---------- */
 
-export async function api<T>(path: string, body?: unknown): Promise<T> {
+export async function api<T>(path: string, body?: unknown, method?: string): Promise<T> {
   const res = await fetch(path, {
-    method: body === undefined ? "GET" : "POST",
+    method: method || (body === undefined ? "GET" : "POST"),
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -105,7 +131,9 @@ export function useGenerate<T>() {
     setLoading(true);
     setError(null);
     try {
-      return await api<T>(path, body);
+      const result = await api<T>(path, body);
+      refreshProfile();
+      return result;
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       return null;

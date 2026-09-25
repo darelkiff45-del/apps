@@ -46,4 +46,4 @@ export const POST = handler(Input, async ({ brief, style, duration, platform }) 
       briefToText(brief),
     "medium",
   );
-});
+}, { cost: "video-script" });

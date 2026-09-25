@@ -4,7 +4,8 @@ import { useState } from "react";
 import { BriefForm } from "@/components/BriefForm";
 import { HtmlPreview } from "@/components/HtmlPreview";
 import { EmptyState, ErrorBox, GenerateButton, PageHeader } from "@/components/ui";
-import { saveProject, slugify, useBrief, useGenerate, useStored } from "@/lib/client";
+import { slugify, useBrief, useGenerate, useStored } from "@/lib/client";
+import { COSTS } from "@/lib/plans";
 
 const ALL_SECTIONS = ["Accueil", "À propos", "Services", "Produits", "Portfolio", "Témoignages", "Tarifs", "FAQ", "Blog", "Contact"];
 
@@ -21,7 +22,6 @@ export default function SitePage() {
     const res = await run("/api/site", { brief, business, sections, style, contact });
     if (res) {
       setHtml(res.html);
-      saveProject("site", business || brief.name || "Site vitrine", res.html);
     }
   };
 
@@ -62,7 +62,7 @@ export default function SitePage() {
               <input className="input" placeholder="WhatsApp, email, ville…" value={contact} onChange={(e) => setContact(e.target.value)} />
             </div>
             <GenerateButton loading={loading} onClick={generate}>
-              ✨ Créer le site
+              ✨ Créer le site · {COSTS.site} crédits
             </GenerateButton>
             <ErrorBox error={error} />
           </div>

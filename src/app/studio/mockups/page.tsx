@@ -6,7 +6,8 @@ import { BriefForm } from "@/components/BriefForm";
 import type { CoverDesign } from "@/components/Cover";
 import { MockupGallery } from "@/components/Mockups";
 import { EmptyState, ErrorBox, GenerateButton, PageHeader } from "@/components/ui";
-import { saveProject, slugify, useBrief, useGenerate, useStored } from "@/lib/client";
+import { api, slugify, useBrief, useGenerate, useStored } from "@/lib/client";
+import { COSTS } from "@/lib/plans";
 
 const COLOR_FIELDS: [keyof CoverDesign, string][] = [
   ["background", "Fond"],
@@ -21,13 +22,35 @@ export default function MockupsPage() {
   const [, setCoverImage] = useStored<string | null>("cover-image", null);
   const [productType, setProductType] = useState("ebook");
   const [notice, setNotice] = useState<string | null>(null);
-  const { run, loading, error } = useGenerate<CoverDesignResult>();
+  const [projectId, setProjectId] = useStored<string | null>("cover-project-id", null);
+  const [saving, setSaving] = useState(false);
+  const { run, loading, error } = useGenerate<CoverDesignResult & { projectId: string | null }>();
+
+  const saveDesign = async () => {
+    if (!projectId || !design) return;
+    setSaving(true);
+    try {
+      await api(`/api/projects/${projectId}`, { title: design.title, data: design }, "PATCH");
+      setNotice("✓ Modifications enregistrées dans le cloud.");
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveToCloud = async (name: string, dataUrl: string) => {
+    if (!projectId) return;
+    await api(`/api/projects/${projectId}/files`, { name, dataUrl });
+    setNotice(`✓ ${name} enregistré dans « Mes projets ».`);
+  };
 
   const generate = async () => {
     const res = await run("/api/mockup", { brief, productType });
     if (res) {
-      setDesign(res);
-      saveProject("mockup", res.title, res);
+      const { projectId: id, ...cover } = res;
+      setDesign(cover);
+      setProjectId(id);
     }
   };
 
@@ -49,7 +72,7 @@ export default function MockupsPage() {
               </select>
             </div>
             <GenerateButton loading={loading} onClick={generate}>
-              ✨ {design ? "Nouvelle couverture" : "Générer la couverture"}
+              ✨ {design ? "Nouvelle couverture" : "Générer la couverture"} · {COSTS.mockup} crédit
             </GenerateButton>
             <ErrorBox error={error} />
           </div>
@@ -120,6 +143,11 @@ export default function MockupsPage() {
                   />
                 ))}
               </div>
+              {projectId && (
+                <button className="btn-ghost w-full" disabled={saving} onClick={saveDesign}>
+                  {saving ? "Enregistrement…" : "☁️ Enregistrer les modifications"}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -130,6 +158,7 @@ export default function MockupsPage() {
               design={design}
               price={brief.price}
               filename={slugify(design.title)}
+              onSaveCloud={projectId ? saveToCloud : undefined}
               onUseForSales={(url) => {
                 setCoverImage(url);
                 setNotice("✓ Mockup enregistré : il sera intégré à ta prochaine page de vente.");

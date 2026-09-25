@@ -31,4 +31,7 @@ export const POST = handler(Input, async ({ brief, framework, bonuses, guarantee
   );
   if (coverImage) html = html.replaceAll("{{COVER_IMAGE}}", coverImage);
   return { html };
+}, {
+  cost: "sales-page",
+  save: ({ brief }, { html }) => ({ type: "sales-page", title: `Page de vente — ${brief.name || "produit"}`, data: { html } }),
 });

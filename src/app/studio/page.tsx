@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BriefForm } from "@/components/BriefForm";
 import { PageHeader } from "@/components/ui";
-import { listProjects, type Project } from "@/lib/client";
+import { api, type ProjectSummary } from "@/lib/client";
 import { MODULES } from "@/lib/modules";
 
 const STEPS = [
@@ -15,8 +15,12 @@ const STEPS = [
 ];
 
 export default function Dashboard() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  useEffect(() => setProjects(listProjects()), []);
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  useEffect(() => {
+    api<{ projects: ProjectSummary[] }>("/api/projects")
+      .then((r) => setProjects(r.projects))
+      .catch(() => setProjects([]));
+  }, []);
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -59,7 +63,7 @@ export default function Dashboard() {
                 {projects.slice(0, 5).map((p) => (
                   <li key={p.id} className="flex justify-between py-2">
                     <span>{p.title}</span>
-                    <span className="text-gray-400">{new Date(p.createdAt).toLocaleDateString("fr-FR")}</span>
+                    <span className="text-gray-400">{new Date(p.created_at).toLocaleDateString("fr-FR")}</span>
                   </li>
                 ))}
               </ul>
