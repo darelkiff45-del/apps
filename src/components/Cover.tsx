@@ -27,7 +27,15 @@ export function Cover({ design, width = 300 }: { design: CoverDesign; width?: nu
       }}
       className="relative flex flex-col overflow-hidden"
     >
-      <div className="absolute inset-0" style={{ background: PATTERNS[d.pattern](d.accent) }} />
+      {d.image ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={d.image} alt="" crossOrigin="anonymous" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, transparent 25%, ${d.background}ee 68%, ${d.backgroundEnd})` }} />
+        </>
+      ) : (
+        <div className="absolute inset-0" style={{ background: PATTERNS[d.pattern](d.accent) }} />
+      )}
       <div className="relative flex flex-1 flex-col p-[1.6em]">
         {d.badge && (
           <span

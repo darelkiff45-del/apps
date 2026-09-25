@@ -6,7 +6,7 @@ import { BriefForm } from "@/components/BriefForm";
 import type { CoverDesign } from "@/components/Cover";
 import { HtmlPreview } from "@/components/HtmlPreview";
 import { EmptyState, ErrorBox, GenerateButton, PageHeader } from "@/components/ui";
-import { slugify, useBrief, useGenerate, useStored } from "@/lib/client";
+import { api, slugify, useBrief, useGenerate, useStored } from "@/lib/client";
 import { ebookToHtml } from "@/lib/ebook";
 import { COSTS } from "@/lib/plans";
 
@@ -14,16 +14,20 @@ export default function EbookPage() {
   const [brief] = useBrief();
   const [cover] = useStored<CoverDesign | null>("cover-design", null);
   const [ebook, setEbook] = useStored<EbookResult | null>("last-ebook", null);
+  const [projectId, setProjectId] = useStored<string | null>("last-ebook-project", null);
+  const [editing, setEditing] = useState(false);
   const [chapters, setChapters] = useState(6);
   const [length, setLength] = useState<"court" | "moyen" | "long">("moyen");
   const [author, setAuthor] = useState("");
-  const { run, loading, error, setError } = useGenerate<EbookResult>();
+  const { run, loading, error, setError } = useGenerate<EbookResult & { projectId?: string | null }>();
 
   const generate = async () => {
     if (!brief.niche && !brief.name) return setError("Indique au moins le nom ou la niche dans la fiche produit.");
     const res = await run("/api/ebook", { brief, chapters, length });
     if (res) {
-      setEbook(res);
+      const { projectId: id, ...book } = res;
+      setEbook(book);
+      setProjectId(id || null);
     }
   };
 
@@ -62,12 +66,90 @@ export default function EbookPage() {
           </div>
         </div>
         <div>
-          {ebook ? (
-            <HtmlPreview html={ebookToHtml(ebook, cover, author)} filename={`${slugify(ebook.title)}.html`} printable />
+          {ebook && editing ? (
+            <EbookEditor
+              ebook={ebook}
+              onCancel={() => setEditing(false)}
+              onSave={async (next) => {
+                setEbook(next);
+                if (projectId) await api(`/api/projects/${projectId}`, { title: next.title, data: next }, "PATCH");
+                setEditing(false);
+              }}
+            />
+          ) : ebook ? (
+            <div className="space-y-3">
+              <div className="flex justify-end">
+                <button className="btn-ghost" onClick={() => setEditing(true)}>
+                  ✏️ Modifier le texte
+                </button>
+              </div>
+              <HtmlPreview html={ebookToHtml(ebook, cover, author)} filename={`${slugify(ebook.title)}.html`} printable />
+            </div>
           ) : (
             <EmptyState text="Ton ebook apparaîtra ici, prêt à être exporté en PDF." />
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function EbookEditor({ ebook, onSave, onCancel }: { ebook: EbookResult; onSave: (e: EbookResult) => Promise<void>; onCancel: () => void }) {
+  const [draft, setDraft] = useState(ebook);
+  const [saving, setSaving] = useState(false);
+  const setChapter = (i: number, patch: Partial<EbookResult["chapters"][number]>) =>
+    setDraft({ ...draft, chapters: draft.chapters.map((c, j) => (j === i ? { ...c, ...patch } : c)) });
+
+  return (
+    <div className="card space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="font-bold">✏️ Modifier l&apos;ebook</span>
+        <div className="flex gap-2">
+          <button className="btn-ghost py-1 text-xs" onClick={onCancel}>
+            Annuler
+          </button>
+          <button
+            className="btn-primary py-1 text-xs"
+            disabled={saving}
+            onClick={async () => {
+              setSaving(true);
+              await onSave(draft).finally(() => setSaving(false));
+            }}
+          >
+            {saving ? "Enregistrement…" : "💾 Enregistrer"}
+          </button>
+        </div>
+      </div>
+      <p className="text-xs text-gray-500">Mise en forme : ### sous-titre, **gras**, - liste.</p>
+      <div className="grid gap-3 md:grid-cols-2">
+        <div>
+          <label className="label">Titre</label>
+          <input className="input" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+        </div>
+        <div>
+          <label className="label">Sous-titre</label>
+          <input className="input" value={draft.subtitle} onChange={(e) => setDraft({ ...draft, subtitle: e.target.value })} />
+        </div>
+      </div>
+      <div>
+        <label className="label">Introduction</label>
+        <textarea className="input" rows={6} value={draft.introduction} onChange={(e) => setDraft({ ...draft, introduction: e.target.value })} />
+      </div>
+      {draft.chapters.map((c, i) => (
+        <div key={i} className="space-y-2 rounded-lg bg-gray-50 p-3">
+          <label className="label">Chapitre {i + 1}</label>
+          <input className="input font-semibold" value={c.title} onChange={(e) => setChapter(i, { title: e.target.value })} />
+          <textarea className="input" rows={10} value={c.content} onChange={(e) => setChapter(i, { content: e.target.value })} />
+          <input className="input" value={c.actionStep} onChange={(e) => setChapter(i, { actionStep: e.target.value })} placeholder="Passe à l'action" />
+        </div>
+      ))}
+      <div>
+        <label className="label">Conclusion</label>
+        <textarea className="input" rows={5} value={draft.conclusion} onChange={(e) => setDraft({ ...draft, conclusion: e.target.value })} />
+      </div>
+      <div>
+        <label className="label">Appel à l&apos;action final</label>
+        <input className="input" value={draft.callToAction} onChange={(e) => setDraft({ ...draft, callToAction: e.target.value })} />
       </div>
     </div>
   );

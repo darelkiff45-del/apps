@@ -1,15 +1,21 @@
 import { z } from "zod";
 import { AIError } from "@/lib/ai";
-import { videoStatus } from "@/lib/heygen";
+import { hfStatus } from "@/lib/higgsfield";
 import { COSTS } from "@/lib/plans";
 import { handler } from "@/lib/route";
 import { createAdmin } from "@/lib/supabase/server";
+import type { RenderedScene } from "../render/route";
+
+export const maxDuration = 120;
 
 const Input = z.object({ projectId: z.string().uuid() });
 
-type VideoData = { videoId: string; status?: string; storagePath?: string; refunded?: boolean; error?: string };
+type VideoData = { script?: unknown; format?: string; scenes: RenderedScene[] };
 
-/** Suit le rendu HeyGen ; une fois terminé, copie la vidéo dans le stockage cloud (les liens HeyGen expirent). */
+/**
+ * Suit la production de chaque scène. Les clips terminés sont copiés dans le stockage cloud
+ * (les liens Higgsfield sont temporaires) ; les scènes échouées sont remboursées une seule fois.
+ */
 export const POST = handler(Input, async ({ projectId }, { user }) => {
   const admin = createAdmin();
   const { data: project } = await admin
@@ -21,48 +27,64 @@ export const POST = handler(Input, async ({ projectId }, { user }) => {
     .single();
   if (!project) throw new AIError("Vidéo introuvable.", 404);
   const data = project.data as VideoData;
+  if (!Array.isArray(data?.scenes)) throw new AIError("Cette vidéo a été créée avec une ancienne version.", 400);
 
-  if (data.storagePath) {
-    const { data: signed } = await admin.storage.from("projects").createSignedUrl(data.storagePath, 3600);
-    return { status: "completed", url: signed?.signedUrl };
-  }
-  if (data.status === "failed") return { status: "failed", error: data.error };
+  const files = new Set<string>((project.files as string[]) || []);
+  let changed = false;
 
-  const s = await videoStatus(data.videoId);
-
-  if (s.status === "failed") {
-    const next: VideoData = { ...data, status: "failed", error: s.error?.message || "Échec du rendu" };
-    if (!data.refunded) {
-      await admin.rpc("refund_credits", { p_user: user.id, p_amount: COSTS["video-render"], p_kind: "video-render" });
-      next.refunded = true;
-    }
-    await admin.from("projects").update({ data: next, updated_at: new Date().toISOString() }).eq("id", projectId);
-    return { status: "failed", error: next.error };
-  }
-
-  if (s.status === "completed" && s.video_url) {
-    const path = `${user.id}/${projectId}/video.mp4`;
-    const video = await fetch(s.video_url);
-    if (video.ok) {
-      const { error } = await admin.storage
-        .from("projects")
-        .upload(path, await video.arrayBuffer(), { contentType: "video/mp4", upsert: true });
-      if (!error) {
-        await admin
-          .from("projects")
-          .update({
-            data: { ...data, status: "completed", storagePath: path },
-            files: [...((project.files as string[]) || []), path],
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", projectId);
-        const { data: signed } = await admin.storage.from("projects").createSignedUrl(path, 3600);
-        return { status: "completed", url: signed?.signedUrl };
+  const scenes = await Promise.all(
+    data.scenes.map(async (scene, i): Promise<RenderedScene> => {
+      if (scene.storagePath || scene.status === "failed" || scene.status === "nsfw" || !scene.requestId) return scene;
+      try {
+        const s = await hfStatus(scene.requestId);
+        if (s.status === "completed" && s.videoUrl) {
+          const video = await fetch(s.videoUrl);
+          if (!video.ok) return scene;
+          const path = `${user.id}/${projectId}/scene-${i + 1}.mp4`;
+          const { error } = await admin.storage
+            .from("projects")
+            .upload(path, await video.arrayBuffer(), { contentType: "video/mp4", upsert: true });
+          if (error) return scene;
+          files.add(path);
+          changed = true;
+          return { ...scene, status: "completed", storagePath: path };
+        }
+        if (s.status === "failed" || s.status === "nsfw") {
+          changed = true;
+          if (!scene.refunded) await admin.rpc("refund_credits", { p_user: user.id, p_amount: COSTS["video-render"], p_kind: "video-render" });
+          return { ...scene, status: s.status, refunded: true, error: s.status === "nsfw" ? "Refusé par la modération" : "Échec du rendu" };
+        }
+        if (s.status !== scene.status) changed = true;
+        return { ...scene, status: s.status };
+      } catch {
+        return scene; // nouvel essai au prochain passage
       }
-    }
-    // Copie impossible : on renvoie le lien HeyGen (temporaire).
-    return { status: "completed", url: s.video_url };
+    }),
+  );
+
+  if (changed) {
+    await admin
+      .from("projects")
+      .update({ data: { ...data, scenes }, files: [...files], updated_at: new Date().toISOString() })
+      .eq("id", projectId);
   }
 
-  return { status: s.status };
+  const paths = scenes.flatMap((s) => (s.storagePath ? [s.storagePath] : []));
+  const signed = paths.length ? (await admin.storage.from("projects").createSignedUrls(paths, 3600)).data || [] : [];
+  const urlOf = new Map(signed.map((x) => [x.path, x.signedUrl]));
+
+  const done = scenes.every((s) => s.storagePath || s.status === "failed" || s.status === "nsfw");
+  return {
+    done,
+    scenes: scenes.map((s) => ({
+      label: s.label,
+      mode: s.mode,
+      status: s.storagePath ? "completed" : s.status,
+      onScreenText: s.onScreenText,
+      voiceover: s.voiceover,
+      imageUrl: s.imageUrl,
+      url: s.storagePath ? urlOf.get(s.storagePath) : undefined,
+      error: s.error,
+    })),
+  };
 });

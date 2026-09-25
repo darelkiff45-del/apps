@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/account";
+import { getProfile, requireUser } from "@/lib/account";
+import { withBadge } from "@/lib/publish";
 import { AIError } from "@/lib/ai";
 import { errorResponse } from "@/lib/route";
 import { createAdmin, createClient } from "@/lib/supabase/server";
@@ -32,7 +33,7 @@ const Patch = z.object({ title: z.string().max(200).optional(), data: z.unknown(
 
 export async function PATCH(req: Request, { params }: Ctx) {
   try {
-    await requireUser();
+    const user = await requireUser();
     const { id } = await params;
     const body = Patch.safeParse(await req.json().catch(() => null));
     if (!body.success) throw new AIError("Requête invalide.", 400);
@@ -42,7 +43,23 @@ export async function PATCH(req: Request, { params }: Ctx) {
       .update({ ...body.data, updated_at: new Date().toISOString() })
       .eq("id", id);
     if (error) throw error;
-    return NextResponse.json({ ok: true });
+
+    // Si la page est publiée, la version en ligne est mise à jour avec les modifications.
+    const html = (body.data.data as { html?: unknown } | undefined)?.html;
+    let republished = false;
+    if (typeof html === "string") {
+      const admin = createAdmin();
+      const { data: site } = await admin.from("sites").select("id").eq("project_id", id).eq("user_id", user.id).maybeSingle();
+      if (site) {
+        const profile = await getProfile(user.id);
+        await admin
+          .from("sites")
+          .update({ html: profile.plan === "free" ? withBadge(html) : html, updated_at: new Date().toISOString() })
+          .eq("id", site.id);
+        republished = true;
+      }
+    }
+    return NextResponse.json({ ok: true, republished });
   } catch (err) {
     return errorResponse(err);
   }

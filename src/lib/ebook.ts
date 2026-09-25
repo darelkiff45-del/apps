@@ -6,7 +6,11 @@ import { escapeHtml, markdownToHtml } from "./markdown";
 export function ebookToHtml(ebook: EbookResult, cover: CoverDesign | null, author: string) {
   const c = cover;
   const coverPage = c
-    ? `<section class="cover" style="background:linear-gradient(160deg,${c.background},${c.backgroundEnd});color:${c.text}">
+    ? `<section class="cover" style="background:${
+        c.image
+          ? `linear-gradient(180deg,transparent 25%,${c.background}ee 68%,${c.backgroundEnd}),url('${c.image}') center/cover`
+          : `linear-gradient(160deg,${c.background},${c.backgroundEnd})`
+      };color:${c.text}">
         <span class="badge" style="background:${c.accent};color:${c.background}">${escapeHtml(c.badge)}</span>
         <div class="cover-body"><div class="bar" style="background:${c.accent}"></div>
         <h1 style="font-family:'${c.fontFamily}',serif">${escapeHtml(ebook.title)}</h1>

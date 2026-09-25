@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/studio", label: "Tableau de bord", icon: "🏠" },
   ...MODULES,
   { href: "/studio/projets", label: "Mes projets", icon: "📁" },
+  { href: "/studio/publications", label: "Mes pages en ligne", icon: "🚀" },
   { href: "/studio/compte", label: "Mon compte", icon: "👤" },
 ];
 

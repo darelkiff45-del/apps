@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { BriefForm } from "@/components/BriefForm";
-import { HtmlPreview } from "@/components/HtmlPreview";
+import { HtmlWorkspace, type HtmlResult } from "@/components/HtmlWorkspace";
+import { VariantToggle } from "@/components/Options";
 import { EmptyState, ErrorBox, GenerateButton, PageHeader } from "@/components/ui";
 import { slugify, useBrief, useGenerate, useStored } from "@/lib/client";
 import { TEMPLATE_KINDS } from "@/lib/constants";
@@ -10,16 +11,17 @@ import { COSTS } from "@/lib/plans";
 
 export default function TemplatesPage() {
   const [brief] = useBrief();
-  const [html, setHtml] = useStored<string | null>("last-template", null);
+  const [result, setResult] = useStored<HtmlResult | null>("last-template-v2", null);
+  const [count, setCount] = useState<1 | 3>(1);
   const [kind, setKind] = useState<(typeof TEMPLATE_KINDS)[number]>(TEMPLATE_KINDS[0]);
   const [pages, setPages] = useState(3);
   const [details, setDetails] = useState("");
-  const { run, loading, error } = useGenerate<{ html: string }>();
+  const { run, loading, error } = useGenerate<HtmlResult>();
 
   const generate = async () => {
-    const res = await run("/api/template", { brief, kind, pages, details });
+    const res = await run("/api/template", { brief, kind, pages, details, variants: count });
     if (res) {
-      setHtml(res.html);
+      setResult(res);
     }
   };
 
@@ -46,15 +48,16 @@ export default function TemplatesPage() {
               <label className="label">Précisions (optionnel)</label>
               <textarea className="input" rows={3} placeholder="Ex. planner mensuel 2026, couleurs pastel, style minimaliste" value={details} onChange={(e) => setDetails(e.target.value)} />
             </div>
+            <VariantToggle value={count} onChange={setCount} />
             <GenerateButton loading={loading} onClick={generate}>
-              ✨ Créer le template · {COSTS.template} crédits
+              ✨ Créer le template · {COSTS.template * count} crédits
             </GenerateButton>
             <ErrorBox error={error} />
           </div>
         </div>
         <div>
-          {html ? (
-            <HtmlPreview html={html} filename={`template-${slugify(kind)}.html`} printable />
+          {result ? (
+            <HtmlWorkspace result={result} onChange={setResult} filename={`template-${slugify(kind)}.html`} title={kind} printable />
           ) : (
             <EmptyState text="Ton template imprimable apparaîtra ici. Exporte-le en PDF pour le vendre." />
           )}

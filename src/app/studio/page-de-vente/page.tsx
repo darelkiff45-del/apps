@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { BriefForm } from "@/components/BriefForm";
-import { HtmlPreview } from "@/components/HtmlPreview";
+import { HtmlWorkspace, type HtmlResult } from "@/components/HtmlWorkspace";
+import { Toggle, VariantToggle } from "@/components/Options";
 import { EmptyState, ErrorBox, GenerateButton, PageHeader } from "@/components/ui";
 import { slugify, useBrief, useGenerate, useStored } from "@/lib/client";
-import { COSTS } from "@/lib/plans";
+import { COSTS, MAX_AUTO_IMAGES } from "@/lib/plans";
 
 const FRAMEWORKS = [
   { id: "PAS", label: "PAS — Problème, Agitation, Solution" },
@@ -15,13 +16,16 @@ const FRAMEWORKS = [
 
 export default function SalesPage() {
   const [brief, , briefReady] = useBrief();
-  const [html, setHtml] = useStored<string | null>("last-sales-page", null);
+  const [result, setResult] = useStored<HtmlResult | null>("last-sales-page-v2", null);
+  const [count, setCount] = useState<1 | 3>(1);
+  const [aiImages, setAiImages] = useState(false);
   const [coverImage, setCoverImage] = useStored<string | null>("cover-image", null);
   const [framework, setFramework] = useState(FRAMEWORKS[0].id);
   const [bonuses, setBonuses] = useState("");
   const [guarantee, setGuarantee] = useState("Satisfait ou remboursé 7 jours");
   const [checkoutUrl, setCheckoutUrl] = useState("");
-  const { run, loading, error, setError } = useGenerate<{ html: string }>();
+  const { run, loading, error, setError } = useGenerate<HtmlResult>();
+  const cost = (COSTS["sales-page"] + (aiImages ? MAX_AUTO_IMAGES * COSTS.image : 0)) * count;
 
   const generate = async () => {
     if (briefReady && !brief.promise) return setError("Ajoute la promesse / transformation dans la fiche produit : c'est le cœur de la page de vente.");
@@ -32,9 +36,11 @@ export default function SalesPage() {
       guarantee,
       checkoutUrl: checkoutUrl || "#",
       coverImage: coverImage || undefined,
+      variants: count,
+      aiImages,
     });
     if (res) {
-      setHtml(res.html);
+      setResult(res);
     }
   };
 
@@ -79,13 +85,27 @@ export default function SalesPage() {
             ) : (
               <p className="text-xs text-gray-500">Astuce : dans « Mockups », clique « Utiliser sur la page de vente » pour afficher ton produit.</p>
             )}
+            <VariantToggle value={count} onChange={setCount} />
+            <Toggle checked={aiImages} onChange={setAiImages} label="Images générées par IA" hint={`Jusqu'à ${MAX_AUTO_IMAGES} visuels uniques (Higgsfield) : ambiance, résultat, client idéal.`} />
             <GenerateButton loading={loading} onClick={generate}>
-              ✨ Écrire la page de vente · {COSTS["sales-page"]} crédits
+              ✨ Écrire la page de vente · {cost} crédits
             </GenerateButton>
             <ErrorBox error={error} />
           </div>
         </div>
-        <div>{html ? <HtmlPreview html={html} filename={`page-de-vente-${slugify(brief.name)}.html`} /> : <EmptyState text="Ta page de vente apparaîtra ici." />}</div>
+        <div>
+          {result ? (
+            <HtmlWorkspace
+              result={result}
+              onChange={setResult}
+              filename={`page-de-vente-${slugify(brief.name)}.html`}
+              title={brief.name || "mon-produit"}
+              publishable
+            />
+          ) : (
+            <EmptyState text="Ta page de vente apparaîtra ici." />
+          )}
+        </div>
       </div>
     </div>
   );

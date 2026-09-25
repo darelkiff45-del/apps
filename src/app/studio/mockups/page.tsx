@@ -4,7 +4,9 @@ import { useState } from "react";
 import type { CoverDesignResult } from "@/app/api/mockup/route";
 import { BriefForm } from "@/components/BriefForm";
 import type { CoverDesign } from "@/components/Cover";
+import { Cover } from "@/components/Cover";
 import { MockupGallery } from "@/components/Mockups";
+import { Toggle, VariantToggle } from "@/components/Options";
 import { EmptyState, ErrorBox, GenerateButton, PageHeader } from "@/components/ui";
 import { api, slugify, useBrief, useGenerate, useStored } from "@/lib/client";
 import { COSTS } from "@/lib/plans";
@@ -24,7 +26,11 @@ export default function MockupsPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [projectId, setProjectId] = useStored<string | null>("cover-project-id", null);
   const [saving, setSaving] = useState(false);
-  const { run, loading, error } = useGenerate<CoverDesignResult & { projectId: string | null }>();
+  const [variants, setVariants] = useStored<CoverDesign[]>("cover-variants", []);
+  const [count, setCount] = useState<1 | 3>(1);
+  const [aiImage, setAiImage] = useState(false);
+  const { run, loading, error } = useGenerate<{ design: CoverDesignResult; variants: CoverDesignResult[]; projectId: string | null }>();
+  const cost = (count === 3 ? 2 : 1) * COSTS.mockup + (aiImage ? count * COSTS.image : 0);
 
   const saveDesign = async () => {
     if (!projectId || !design) return;
@@ -46,11 +52,11 @@ export default function MockupsPage() {
   };
 
   const generate = async () => {
-    const res = await run("/api/mockup", { brief, productType });
+    const res = await run("/api/mockup", { brief, productType, variants: count, aiImage });
     if (res) {
-      const { projectId: id, ...cover } = res;
-      setDesign(cover);
-      setProjectId(id);
+      setDesign(res.design);
+      setVariants(res.variants);
+      setProjectId(res.projectId);
     }
   };
 
@@ -71,8 +77,10 @@ export default function MockupsPage() {
                 <option>workbook</option>
               </select>
             </div>
+            <VariantToggle value={count} onChange={setCount} />
+            <Toggle checked={aiImage} onChange={setAiImage} label="Illustration IA sur la couverture" hint="Une image unique générée par Higgsfield en fond de couverture." />
             <GenerateButton loading={loading} onClick={generate}>
-              ✨ {design ? "Nouvelle couverture" : "Générer la couverture"} · {COSTS.mockup} crédit
+              ✨ {design ? "Nouvelle couverture" : "Générer la couverture"} · {cost} crédit{cost > 1 ? "s" : ""}
             </GenerateButton>
             <ErrorBox error={error} />
           </div>
@@ -153,6 +161,22 @@ export default function MockupsPage() {
         </div>
         <div>
           {notice && <div className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">{notice}</div>}
+          {design && variants.length > 1 && (
+            <div className="card mb-4">
+              <div className="mb-3 text-sm font-bold">Choisis ta couverture :</div>
+              <div className="flex flex-wrap gap-4">
+                {variants.map((v, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setDesign(v)}
+                    className={`overflow-hidden rounded-lg ring-offset-2 transition ${v.title === design.title && v.background === design.background ? "ring-4 ring-brand-500" : "opacity-80 hover:opacity-100"}`}
+                  >
+                    <Cover design={v} width={120} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {design ? (
             <MockupGallery
               design={design}

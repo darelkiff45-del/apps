@@ -33,8 +33,12 @@ export async function getProfile(userId: string): Promise<Profile> {
 }
 
 /** Débite les crédits, exécute la génération, rembourse si elle échoue. */
-export async function withCredits<T>(userId: string, kind: CostKind, fn: () => Promise<T>): Promise<T> {
-  const amount = COSTS[kind];
+export async function withCredits<T>(
+  userId: string,
+  kind: CostKind,
+  fn: () => Promise<T>,
+  amount: number = COSTS[kind],
+): Promise<T> {
   const admin = createAdmin();
   const { error } = await admin.rpc("consume_credits", { p_user: userId, p_amount: amount, p_kind: kind });
   if (error) {
@@ -49,9 +53,13 @@ export async function withCredits<T>(userId: string, kind: CostKind, fn: () => P
   try {
     return await fn();
   } catch (err) {
-    await admin.rpc("refund_credits", { p_user: userId, p_amount: amount, p_kind: kind });
+    await refundCredits(userId, kind, amount);
     throw err;
   }
+}
+
+export async function refundCredits(userId: string, kind: CostKind, amount: number) {
+  if (amount > 0) await createAdmin().rpc("refund_credits", { p_user: userId, p_amount: amount, p_kind: kind });
 }
 
 export async function requireVideoPlan(userId: string) {

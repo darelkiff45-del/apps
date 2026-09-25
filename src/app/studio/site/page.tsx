@@ -2,26 +2,30 @@
 
 import { useState } from "react";
 import { BriefForm } from "@/components/BriefForm";
-import { HtmlPreview } from "@/components/HtmlPreview";
+import { HtmlWorkspace, type HtmlResult } from "@/components/HtmlWorkspace";
+import { Toggle, VariantToggle } from "@/components/Options";
 import { EmptyState, ErrorBox, GenerateButton, PageHeader } from "@/components/ui";
 import { slugify, useBrief, useGenerate, useStored } from "@/lib/client";
-import { COSTS } from "@/lib/plans";
+import { COSTS, MAX_AUTO_IMAGES } from "@/lib/plans";
 
 const ALL_SECTIONS = ["Accueil", "À propos", "Services", "Produits", "Portfolio", "Témoignages", "Tarifs", "FAQ", "Blog", "Contact"];
 
 export default function SitePage() {
   const [brief] = useBrief();
-  const [html, setHtml] = useStored<string | null>("last-site", null);
+  const [result, setResult] = useStored<HtmlResult | null>("last-site-v2", null);
+  const [count, setCount] = useState<1 | 3>(1);
+  const [aiImages, setAiImages] = useState(false);
   const [business, setBusiness] = useState("");
   const [style, setStyle] = useState("moderne et épuré");
   const [contact, setContact] = useState("");
   const [sections, setSections] = useState(["Accueil", "À propos", "Services", "Témoignages", "FAQ", "Contact"]);
-  const { run, loading, error } = useGenerate<{ html: string }>();
+  const { run, loading, error } = useGenerate<HtmlResult>();
+  const cost = (COSTS.site + (aiImages ? MAX_AUTO_IMAGES * COSTS.image : 0)) * count;
 
   const generate = async () => {
-    const res = await run("/api/site", { brief, business, sections, style, contact });
+    const res = await run("/api/site", { brief, business, sections, style, contact, variants: count, aiImages });
     if (res) {
-      setHtml(res.html);
+      setResult(res);
     }
   };
 
@@ -61,13 +65,27 @@ export default function SitePage() {
               <label className="label">Coordonnées (optionnel)</label>
               <input className="input" placeholder="WhatsApp, email, ville…" value={contact} onChange={(e) => setContact(e.target.value)} />
             </div>
+            <VariantToggle value={count} onChange={setCount} />
+            <Toggle checked={aiImages} onChange={setAiImages} label="Images générées par IA" hint={`Jusqu'à ${MAX_AUTO_IMAGES} images uniques (Higgsfield) au lieu de photos de banque d'images.`} />
             <GenerateButton loading={loading} onClick={generate}>
-              ✨ Créer le site · {COSTS.site} crédits
+              ✨ Créer le site · {cost} crédits
             </GenerateButton>
             <ErrorBox error={error} />
           </div>
         </div>
-        <div>{html ? <HtmlPreview html={html} filename={`site-${slugify(business || brief.name)}.html`} /> : <EmptyState text="L'aperçu de ton site apparaîtra ici." />}</div>
+        <div>
+          {result ? (
+            <HtmlWorkspace
+              result={result}
+              onChange={setResult}
+              filename={`site-${slugify(business || brief.name)}.html`}
+              title={business || brief.name || "mon-site"}
+              publishable
+            />
+          ) : (
+            <EmptyState text="L'aperçu de ton site apparaîtra ici." />
+          )}
+        </div>
       </div>
     </div>
   );
