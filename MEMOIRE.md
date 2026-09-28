@@ -87,8 +87,8 @@ Recharges : 3 vidéos = 5 000 FCFA, 100 affiches = 2 500 FCFA, 1 avatar perso = 
 1. Quotas sur le pire cas. 2. Pages publiées sur **Cloudflare** (bande passante gratuite), jamais sur
 l'hébergeur de l'app. 3. Vidéo montée par défaut, avatar compte double.
 4. Modèles économiques par défaut, options premium comptent plus. 5. Chaque régénération compte,
-échecs remboursés. 6. Paiement 3 mois (-10 %) / 12 mois (-20 %). 7. Wave en direct dès que possible
-(1 % de frais). 8. Alertes de dépenses Higgsfield + limite par client et par jour. 9. Négocier un tarif
+échecs remboursés. 6. Paiement 3 mois (-10 %) / 12 mois (-20 %). 7. Négocier les frais CinetPay
+au volume. 8. Alertes de dépenses Higgsfield + limite par client et par jour. 9. Négocier un tarif
 Higgsfield au volume. 10. Revoir les prix 1 fois par an (dollar, nouveaux modèles). Formule gratuite :
 vérification email, blocage des emails jetables, pas de vidéo. Quotas non reportés.
 
@@ -96,12 +96,12 @@ vérification email, blocage des emails jetables, pas de vidéo. Quotas non repo
 | Rôle | Outil |
 |---|---|
 | Code | GitHub |
-| Application | **Vercel** recommandé (code déjà prévu pour Vercel, Next.js optimal, 20 $/mois en Pro au lancement ; gratuit pendant le dev). Netlify envisagé puis écarté par Claude : son seul vrai avantage (bande passante des pages) disparaît avec Cloudflare. **À confirmer par Darel** |
+| Application | **Vercel** (validé par Darel le 28/09/2026) : code déjà prévu pour Vercel, Next.js optimal ; gratuit pendant le dev, **Pro 20 $/mois au lancement**. Netlify écarté |
 | Pages publiées des clients | **Cloudflare** : usage commercial autorisé (produit « Cloudflare for SaaS » prévu pour ça). Architecture : toutes les pages dans **R2** (10 Go gratuits, bande passante gratuite) servies par **un seul Worker** (gratuit jusqu'à 100 000 requêtes/jour, puis 5 $/mois pour 10 M/mois) ; domaines perso via Cloudflare for SaaS (100 inclus, puis 0,10 $/domaine/mois). ⚠️ Toutes les pages sont sur le compte de Darel → une page d'arnaque peut faire suspendre le compte : CGU, bouton « Signaler », dépublication en 1 clic, vérification automatique par Claude à la publication |
 | BDD / comptes / fichiers | Supabase (gratuit puis Pro 25 $) |
 | Images + vidéos | **Higgsfield** uniquement (fal.ai prévu en secours, mêmes modèles) |
 | Textes | Claude |
-| Paiement | Le SaaS vise **toute l'Afrique** (pas seulement le Sénégal) → PayDunya écarté (surtout UEMOA). Recommandation de Claude, **à confirmer par Darel** : **Chariow au lancement** (API Checkout `POST https://api.chariow.com/v1/checkout` avec `custom_metadata` {user_id, plan} + `redirect_url`, confirmation par webhook « Pulse » ; chaque formule = un produit de type **licence**, seul type rachetable à l'infini ; 25+ pays africains, Mobile Money + cartes + crypto ; commission **15 %**, puis 10 % après 5 000 $ cumulés ; Darel a déjà son compte ; faire valider par le support Chariow la vente d'abonnements SaaS), puis **CinetPay** (déjà codé ; ~3-4 % ; 9 pays : CI, Sénégal, Cameroun, Mali, Togo, Burkina, Bénin, Guinée, RDC) quand le volume le justifie, + **pawaPay** (Mobile Money seul, 16-23 pays dont anglophones) si besoin. Stripe écarté (indisponible au Sénégal). Marges pire cas avec Chariow : Starter +3 405, Pro +4 830, Business +9 900 FCFA (toujours rentable) |
+| Paiement | **CinetPay** (validé par Darel le 28/09/2026 ; **déjà codé** dans `billing.ts`) : Mobile Money + cartes, ~3-4 % de frais, 9 pays (Côte d'Ivoire, Sénégal, Cameroun, Mali, Togo, Burkina, Bénin, Guinée, RDC). Le SaaS vise toute l'Afrique : ajouter **pawaPay** (Mobile Money seul, 16-23 pays dont anglophones) plus tard si besoin. Écartés : Stripe (indisponible au Sénégal), PayDunya (surtout UEMOA), Chariow (15 % de commission). ⚠️ CinetPay exige des documents d'entreprise (RCCM, NINEA) → l'entreprise doit être créée **avant** le lancement payant. Retirer Stripe du code |
 
 ### Démarches légales de Darel (à faire valider par un comptable / l'APIX)
 Créer l'entreprise à l'**APIX** vers déc. 2026 - janv. 2027 (entreprise individuelle 10-21k FCFA pour
@@ -114,7 +114,7 @@ services numériques auprès de la DGID), sinon réel + TVA 18 %. CGU/CGV, polit
 | Période | À faire |
 |---|---|
 | Fin sept. 2026 | Tests Higgsfield pendant le cashback 100 % (Kling 3.0 vertical 5 s, Kling avec voix en français, Wan 3.0, Graphic ads, Ideogram 4.0) → noter prix réels dans Analytics |
-| Oct.-nov. | Adapter le code : pivot marketing (masquer ebook/templates), affiches, vidéo montée, 10 styles de pages, stratégie, Cloudflare (R2 + Worker), paiements (Chariow et/ou CinetPay), n8n (relances), nouvelles formules dans `plans.ts` (+ fonction SQL `plan_credits` via une **nouvelle** migration) |
+| Oct.-nov. | Adapter le code : pivot marketing (masquer ebook/templates), affiches, vidéo montée, 10 styles de pages, stratégie, Cloudflare (R2 + Worker), paiements CinetPay (retirer Stripe), n8n (relances), nouvelles formules dans `plans.ts` (+ fonction SQL `plan_credits` via une **nouvelle** migration) |
 | Déc.-janv. | Entreprise APIX, compte pro, dossier du prestataire de paiement, compte WhatsApp Business Platform, serveur n8n, CGU, CDP |
 | Févr. 2027 | Bêta fermée (~20 testeurs de ses groupes), ajustement des quotas |
 | **Mars 2027** | **Lancement** |
@@ -142,8 +142,7 @@ de Chariow**, qui exige une instance auto-hébergée). Darel apprend n8n pour se
 - Claude peut : construire les workflows (JSON à importer, ou pilotage via MCP) et, dans le workflow,
   rédiger des messages personnalisés (ex. nombre de visites de la page du client).
 
-**En attente de Darel :** confirmation **Vercel** (vs Netlify) ; choix des paiements (**Chariow puis
-CinetPay**, ou CinetPay directement) + accord du support Chariow ; numéro WhatsApp Business dédié ; prix réel du modèle d'avatar parlant / qualité du français avec Kling,
+**En attente de Darel :** numéro WhatsApp Business dédié ; prix réel du modèle d'avatar parlant / qualité du français avec Kling,
 choix entreprise individuelle ou SUARL, nouveau nom éventuel.
 
 ---
@@ -264,9 +263,9 @@ npx next start -p 3300    # lancer (sans .env.local, le studio s'ouvre sans conn
   Stripe indisponible au Sénégal, Mobile Money sans renouvellement, abus du gratuit, pages d'arnaque,
   deepfakes, contenu générique, dépendance fournisseurs). **Pivot : SaaS marketing seul** (affiches,
   vidéos, pages de vente, stratégie). Formules 7 500 / 15 000 / 30 000 FCFA, « vidéo montée »,
-  Higgsfield (Kling 3.0, Graphic ads, Soul 2), Netlify + Cloudflare, PayDunya puis Wave, création
+  Higgsfield (Kling 3.0, Graphic ads, Soul 2), Cloudflare, création
   d'entreprise APIX. Lancement visé : mars 2027. Tout est détaillé en section 2 bis.
   Fin de session : Cloudflare validé pour les pages (R2 + Worker), Vercel recommandé au lieu de
-  Netlify, paiements panafricains (Chariow puis CinetPay recommandés, PayDunya écarté), relances par
+  Netlify ; Darel a validé **Vercel** et **CinetPay** (PayDunya et Chariow écartés), relances par
   n8n auto-hébergé + WhatsApp Business Platform + email (validé).
   Prochaine étape : résultats des tests Higgsfield, puis adaptation du code.
