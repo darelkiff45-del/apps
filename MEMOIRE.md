@@ -7,9 +7,16 @@
 
 ## 1. Le projet en une phrase
 
-**Créateur Digital AI** : un SaaS où l'on crée des produits digitaux (ebooks, templates) **et tout leur
-marketing** (couvertures et mockups, pages de vente, sites vitrines publiés en 1 clic, vidéos pub UGC /
-storytelling) avec l'IA, à partir d'une seule « fiche produit ».
+**SaaS marketing IA pour les vendeurs en ligne d'Afrique francophone** : affiches pub, vidéos pub
+(UGC avatar et storytelling), pages de vente hébergées et stratégie marketing (organique + payante),
+à partir d'une seule « fiche produit ». Slogan : **« Le plus dur, ce n'est pas de créer le produit,
+c'est le marketing. On s'en occupe. »**
+
+> ⚠️ **Pivot décidé le 28/09/2026 (session 2)** : le projet s'appelait « Créateur Digital AI » et créait
+> aussi des produits (ebooks, templates). Darel a choisi de **recentrer sur le marketing seul**
+> (moins d'options, usage hebdomadaire = meilleure rétention). Le code ebook/templates reste dans le
+> dépôt mais sera masqué (réactivable plus tard en bonus). Le nom sera peut-être changé.
+> **Le code n'a pas encore été adapté à ces décisions** : voir section 2 bis.
 
 - Propriétaire : **Darel** (darelkiff45@gmail.com). Créateur de produits digitaux, public d'Afrique
   francophone (prix en **FCFA**, paiement **Mobile Money**). Il **n'est pas développeur** : lui parler
@@ -36,6 +43,88 @@ storytelling) avec l'IA, à partir d'une seule « fiche produit ».
 Vercel) : Darel doit d'abord créer les comptes (liste dans le README, section « Mise en place »).
 Au premier vrai test, vérifier en priorité : la génération Claude, les images Higgsfield, les webhooks
 de paiement et la publication sur sous-domaine.
+
+---
+
+## 2 bis. Nouveau plan après le pivot (session 2, 28/09/2026) — **lancement prévu en mars 2027**
+
+### Les 4 modules du SaaS marketing
+| Module | Déroulé | Modèles Higgsfield prévus |
+|---|---|---|
+| **Affiches** | Photo/fiche produit → affiche pub. Formats : statut WhatsApp, post Facebook/Instagram, story TikTok | **Graphic ads** (~0,016 $) ou **Ideogram 4.0** (0,03 $, texte multilingue). Secours : fond **Soul 2** (0,003 $) + texte posé par le code (les IA écrivent mal le français) |
+| **Vidéos** | Marketing → Vidéos → **UGC** (choisir un avatar prédéfini OU créer le sien → texte ou mot-clé du produit → précisions) ou **Storytelling** (l'IA propose 3 à 5 situations, ou le client écrit la sienne). Pas de voix off seule pour l'instant | **Kling 3.0** (0,084 $/s prix normal) par défaut ; Wan 3.0 en alternative ; Seedance réservé au premium |
+| **Pages de vente** | Type (page de vente, site vitrine, mini e-commerce) → sujet, nom, rôle → images (importées ou générées, style choisi) → style de copywriting → style visuel (10 styles au départ, inspirés de design systems type getdesign.md, **renommés**, polices Google Fonts, jamais de logos/noms de marques) → liens d'action (Chariow, WhatsApp `wa.me`, paiement) + pixel Facebook/TikTok | Soul 2 pour les images, Claude pour le texte |
+| **Stratégie** | Le client décrit son produit/budget → stratégie organique + payante : plateformes selon le budget, durée de test (phase d'apprentissage), indicateurs (CPC, CTR, coût par vente, ROAS), quoi faire selon les résultats. Recommandations, pas de résultats garantis | Claude (texte seul, très peu cher) |
+
+### La « vidéo montée » (clé de la rentabilité)
+Une vidéo pub de 20 à 30 s = **1 clip IA Kling de 5 s** (accroche) + images produit animées (Soul 2) +
+voix off IA + sous-titres + musique, **assemblés par le code** (montage automatique à développer, ~2-3
+semaines). Coût ≈ **300 FCFA** au lieu de 1 000 à 2 700 FCFA pour 15 s 100 % IA.
+**Vidéo avatar qui parle** : Kling 3.0 image → vidéo avec son intégré (à partir d'un portrait Soul 2),
+10 s ≈ 500 FCFA → **compte pour 2 vidéos**. Qualité du français **à tester**. Soul ID (2,50 $) possible
+pour un avatar personnel cohérent.
+**Avatar personnel = consentement obligatoire** : vidéo de 15 à 30 s dans le navigateur (regarder la
+caméra, tourner la tête, lire « Moi, [nom], j'autorise … le [date] »), validation manuelle au début.
+Avatars prédéfinis = visages africains **générés par IA** (jamais de vraies personnes).
+
+### Formules validées par Darel (quotas calculés sur le pire cas : coût ≤ ~55 % même si tout est utilisé)
+| | Gratuit | Starter | Pro ⭐ | Business |
+|---|---|---|---|---|
+| Prix / mois | 0 | **7 500 FCFA** | **15 000 FCFA** | **30 000 FCFA** |
+| Vidéos pub (avatar = 2) | ❌ (vidéos = payant uniquement) | 5 | 15 | 25 |
+| Pages de vente hébergées | 1 (badge) | 3 | 8 | 15 |
+| Affiches | 10 | 50 | 100 | 300 |
+| Stratégies | 1 | 3 | 8 | 15 |
+| Domaine perso | ❌ | ❌ | ❌ | ✅ |
+| Coût max / marge min | ~390 FCFA | 2 970 / +4 230 (59 %) | 7 920 / +6 480 (45 %) | 15 600 / +13 200 (46 %) |
+
+Coûts unitaires retenus (1 $ = 600 FCFA, **prix normaux hors promo**) : vidéo montée 300 · affiche 15 ·
+page de vente 180 (hypothèse, texte Claude à mesurer) · stratégie 60 FCFA. Utilisation réelle attendue
+40-60 % → marge réelle ~65-75 %. Frais fixes ≈ 30 000 FCFA/mois → rentable dès **5 Pro ou 8 Starter**.
+Recharges : 3 vidéos = 5 000 FCFA, 100 affiches = 2 500 FCFA, 1 avatar perso = 2 500 FCFA.
+
+### Règles de rentabilité
+1. Quotas sur le pire cas. 2. Pages publiées sur **Cloudflare** (bande passante gratuite), jamais sur
+Netlify (bande passante payante en crédits). 3. Vidéo montée par défaut, avatar compte double.
+4. Modèles économiques par défaut, options premium comptent plus. 5. Chaque régénération compte,
+échecs remboursés. 6. Paiement 3 mois (-10 %) / 12 mois (-20 %). 7. Wave en direct dès que possible
+(1 % de frais). 8. Alertes de dépenses Higgsfield + limite par client et par jour. 9. Négocier un tarif
+Higgsfield au volume. 10. Revoir les prix 1 fois par an (dollar, nouveaux modèles). Formule gratuite :
+vérification email, blocage des emails jetables, pas de vidéo. Quotas non reportés.
+
+### Nouvelle stack (remplace la section 3 là où elle diffère)
+| Rôle | Outil |
+|---|---|
+| Code | GitHub |
+| Application | **Netlify** (remplace Vercel ; adapter `publish.ts` qui utilise l'API Vercel pour les domaines) |
+| Pages publiées des clients | **Cloudflare** (+ Cloudflare for SaaS pour les domaines perso) |
+| BDD / comptes / fichiers | Supabase (gratuit puis Pro 25 $) |
+| Images + vidéos | **Higgsfield** uniquement (fal.ai prévu en secours, mêmes modèles) |
+| Textes | Claude |
+| Paiement | **PayDunya** (Wave, Orange Money, Free Money, cartes) au lancement, **Wave Business API** (1 %) ensuite. Remplace Stripe (non disponible au Sénégal) et CinetPay. Mobile Money = pas de renouvellement auto → rappels WhatsApp/email J-3, J-1, J+1 |
+
+### Démarches légales de Darel (à faire valider par un comptable / l'APIX)
+Créer l'entreprise à l'**APIX** vers déc. 2026 - janv. 2027 (entreprise individuelle 10-21k FCFA pour
+démarrer, SUARL plus tard) → RCCM + NINEA → compte bancaire pro (exigé par PayDunya) + carte Visa pour
+payer les services en dollars. Impôts : régime **CGU** si CA < 50 M FCFA (vérifier l'éligibilité des
+services numériques auprès de la DGID), sinon réel + TVA 18 %. CGU/CGV, politique de confidentialité,
+**déclaration à la CDP** (données personnelles, photos/vidéos d'avatar).
+
+### Calendrier
+| Période | À faire |
+|---|---|
+| Fin sept. 2026 | Tests Higgsfield pendant le cashback 100 % (Kling 3.0 vertical 5 s, Kling avec voix en français, Wan 3.0, Graphic ads, Ideogram 4.0) → noter prix réels dans Analytics |
+| Oct.-nov. | Adapter le code : pivot marketing (masquer ebook/templates), affiches, vidéo montée, 10 styles de pages, stratégie, Netlify + Cloudflare, PayDunya, nouvelles formules dans `plans.ts` (+ fonction SQL `plan_credits` via une **nouvelle** migration) |
+| Déc.-janv. | Entreprise APIX, compte pro, dossier PayDunya, CGU, CDP |
+| Févr. 2027 | Bêta fermée (~20 testeurs de ses groupes), ajustement des quotas |
+| **Mars 2027** | **Lancement** |
+
+**Marketing prévu :** build in public sur YouTube (« L'Épopée du Jeune Samouraï »), liste d'attente,
+offre membres fondateurs, bêta-testeurs dans ses groupes, affiliation, partenariat Chariow, vidéos
+courtes démo, challenge « 7 jours », lives. Plus tard : monteur vidéo.
+
+**En attente de Darel :** prix réel du modèle d'avatar parlant / qualité du français avec Kling,
+choix entreprise individuelle ou SUARL, nouveau nom éventuel.
 
 ---
 
@@ -151,3 +240,10 @@ npx next start -p 3300    # lancer (sans .env.local, le studio s'ouvre sans conn
   publication, domaines perso). Darel a choisi **Higgsfield pour les images et les vidéos** → fal.ai et
   HeyGen retirés. Création de ce fichier mémoire et de `CLAUDE.md`.
   Prochaine étape proposée : V3, ou « Retoucher avec Claude » dans l'éditeur.
+- **Session 2 (28/09/2026)** — Discussion stratégie, sans code. Analyse des risques (coûts IA vs prix,
+  Stripe indisponible au Sénégal, Mobile Money sans renouvellement, abus du gratuit, pages d'arnaque,
+  deepfakes, contenu générique, dépendance fournisseurs). **Pivot : SaaS marketing seul** (affiches,
+  vidéos, pages de vente, stratégie). Formules 7 500 / 15 000 / 30 000 FCFA, « vidéo montée »,
+  Higgsfield (Kling 3.0, Graphic ads, Soul 2), Netlify + Cloudflare, PayDunya puis Wave, création
+  d'entreprise APIX. Lancement visé : mars 2027. Tout est détaillé en section 2 bis.
+  Prochaine étape : résultats des tests Higgsfield, puis adaptation du code.
